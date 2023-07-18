@@ -1,6 +1,6 @@
 import SwiftUI
 
-private struct ScreenBuilder {
+internal struct ScreenBuilder {
     let name: String
     @ViewBuilder let builder: ([String : Any]) -> AnyView
 }
@@ -10,8 +10,6 @@ public typealias NavGraphBuilder = (NavGraph) -> Void
 
 public class NavGraph {
     private var screenBuilders: [ScreenBuilder] = []
-    
-    internal var backgroundColor: Color?
     
     /// Adds a new screen builder to the `NavGraph`.
     ///
@@ -78,13 +76,15 @@ public class NavGraph {
         self.screen(name) { _ in contentBuilder() }
     }
     
-    internal func buildScreen(from screenName: String, and arguments: [String : Any] = [:]) -> Screen? {
-        guard let view = self.screenBuilders.first(where: { $0.name == screenName })?.builder(arguments) else {
-            print("🎱 NavGraph/buildScreen(from: \(screenName), and: \(arguments)) 🎱")
+    internal func screenBuilder(of screenName: String) -> ScreenBuilder? {
+        let builder = self.screenBuilders.first(where: { $0.name == screenName })
+        
+        if builder == nil {
+            print("🎱 NavGraph.screenBuilder(of: \(screenName) 🎱")
             print("🧐 Could not retrieve any view named \"\(screenName)\". 🧐")
-            print("👉 Available screens at this time :\(screenBuilders.map { $0.name }) 👈")
+            print("👉 Available screens at this time : \(screenBuilders.map { $0.name }) 👈")
             return nil
         }
-        return Screen(name: screenName, backgroundColor: backgroundColor, view: view)
+        return builder
     }
 }

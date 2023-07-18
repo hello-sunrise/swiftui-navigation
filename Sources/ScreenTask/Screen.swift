@@ -11,7 +11,7 @@ internal class Screen: UIHostingController<AnyView>, Identifiable {
         view: some View
     ) {
         self.name = name
-        super.init(rootView: AnyView(view))
+        super.init(rootView: (view as? AnyView) ?? AnyView(view))
         if let backgroundColor = backgroundColor {
             self.view.backgroundColor = UIColor(backgroundColor)
         }

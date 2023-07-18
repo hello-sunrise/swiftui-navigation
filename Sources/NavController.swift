@@ -84,15 +84,12 @@ public class NavController: ObservableObject {
     private let root: String
     private var screenStack: ScreenStack!
     
-    internal var backgroundColor: Color? {
-        get { navGraph.backgroundColor }
-        set { navGraph.backgroundColor = newValue }
-    }
+    internal var backgroundColor: Color?
     
     internal var viewController: UIViewController? {
         didSet {
             guard let viewController = viewController else { return }
-            let rootScreen = navGraph.buildScreen(from: root, and: [:])!
+            let rootScreen = buildScreen(screenName: root, arguments: [:])!
             self.screenStack = ScreenStack(viewController: viewController, screen: rootScreen)
         }
     }
@@ -121,7 +118,7 @@ public class NavController: ObservableObject {
     /// This method uses the transition `TransitionStyle.coverFullscreen`.
     ///
     public func setNewRoot(screenName: String, arguments: [String: Any] = [:]) {
-        guard let newScreen = navGraph.buildScreen(from: screenName, and: arguments) else { return }
+        guard let newScreen = buildScreen(screenName: screenName, arguments: arguments) else { return }
         screenStack.clear(asNewRoot: newScreen)
     }
     
@@ -178,7 +175,7 @@ public class NavController: ObservableObject {
         transition: TransitionStyle = .coverHorizontal,
         completion: @escaping () -> Void = {}
     ) {
-        guard let newScreen = navGraph.buildScreen(from: screenName, and: arguments) else { return }
+        guard let newScreen = buildScreen(screenName: screenName, arguments: arguments) else { return }
         screenStack.push(screen: newScreen, transition: transition, completion: completion)
     }
     
@@ -208,7 +205,7 @@ public class NavController: ObservableObject {
         @ViewBuilder content: () -> some View
     ) {
         screenStack.push(
-            screen: Screen(name: screenName, backgroundColor: navGraph.backgroundColor, view: content()),
+            screen: Screen(name: screenName, backgroundColor: backgroundColor, view: content().environmentObject(self)),
             transition: transition,
             completion: completion
         )
@@ -236,5 +233,12 @@ public class NavController: ObservableObject {
     ///     - block: This lambda defines the instructions to execute on a back navigation to the calling screen, the dictionary passed as entry parameter works as an arguments map.
     public func setOnNavigateBack(block: @escaping ([String : Any]) -> Void) {
         screenStack.currentScreen.onNavigateTo = block
+    }
+    
+    private func buildScreen(screenName: String, arguments: [String : Any] = [:]) -> Screen? {
+        guard let view = navGraph.screenBuilder(of: screenName)?.builder(arguments) else {
+            return nil
+        }
+        return Screen(name: screenName, backgroundColor: backgroundColor, view: view.environmentObject(self))
     }
 }
