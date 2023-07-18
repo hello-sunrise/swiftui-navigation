@@ -37,6 +37,10 @@ public struct NavHost: View {
         EmptyView()
             .onAppear {
                 if controller.viewController == nil {
+                    window?.backgroundColor = .clear
+                    if let backgroundColor = controller.backgroundColor {
+                        window?.backgroundColor = UIColor(backgroundColor)
+                    }
                     controller.viewController = window?.rootViewController
                 }
             }
