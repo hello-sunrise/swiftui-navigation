@@ -18,6 +18,15 @@ Mention whether you follow Semantic Versioning.
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+## [1.1.0] - 2023-07-19
+
+### Added
+- `NavController` instance as environment object in SwiftUI context
+-  Sample project
+
+### Fixed
+- Transition `coverFullscreen` by setting `window.backgroundColor`
+
 ## [1.0.0] - 2023-07-17
 
 ### Added
