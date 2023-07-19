@@ -2,22 +2,11 @@
 
 ![Swift](https://img.shields.io/badge/Swift-5.x-orange)
 
-🎱 Developer friendly library designed to easily setup navigation through your SwiftUI app.
-
-# Contents
  - [Introduction](#introduction) 
  - [Installation](#installation)
- - [Public architecture](#public-architecture) 
-    - [NavController](#navController) 
-    - [NavGraphBuilder](#navGraphBuilder) 
-    - [NavHost](#navHost) 
- - [Initialization](#initialization) 
- - [NavController methods summary](#navController-methods-summary) 
-    - [push](#push) 
-    - [pop](#pop) 
-    - [setOnNavigateBack](#setOnNavigateBack) 
-    - [setNewRoot](#setNewRoot) 
- - [Sample](#sample)  
+ - [Usage](#usage)
+ - [Sample](#sample)
+ - [Licence](#license)
 
 
 ## Introduction
@@ -40,178 +29,62 @@ dependencies: [
   .package(url: "https://github.com/hello-sunrise/swiftui-navigation", from: "1.x.x")
 ]
 ```
-    
-## Public architecture
-### NavController
-Which is the part of the Navigation that orchestrates how screens are displayed.
-It holds public methods that will be useful to perform navigation through the app.
 
-### NavGraphBuilder
-Which defines how to build screens of the app.
-It is declared once into the NavController parameters.
+## Usage
 
-### NavHost 
-This is the View holder where each screen declared into the NavGraphBuilder will be displayed. 
-
-
-## Initialization
-Let admit that you have four different screens :
-- Splash
-- Home
-- FirstName
-- LastName
-
-First of all you have to set up a `NavController` that takes as parameters :
+First of all, you have to set up a `NavController` that takes the following parameters :
 1) root: The name of the first screen that you want to be displayed.
-2) builder: The way above screens will be built
+2) builder: That will help you establish your graph of screens
 
-```swift
-@main
-struct SampleApp: App {
-    @ObservedObject var controller =
-        NavController(
-            root: "Splash"
-        ) { graph in
-            graph.screen("Splash") { SplashScreen() }
-            graph.screen("Home") { HomeScreen() }
-            graph.screen("FirstName") { FirstNameScreen() }
-            graph.screen("LastName") { navParams in
-                let firstName = navParams["first_name"] as! String
-                LastNameScreen(firstName: firstName)
-            }
-        }
-    ...
-}
-```
-As you can see in the above example, we have told to the `NavController` how to initialize **Four named screens**.
-"LastName" builder is particular as it takes a **navParam** as entry parameter,
-which is a `[String: Any]` that holds data passed through a push method call - see [push](#push) section.     
-
-Now that we have defined how our screens will be built, we must pass the `NavController` to the `NavHost`
-in order to display those screens.
-```swift
-@main
-struct SampleApp: App {
-    var body: some Scene {
-        WindowGroup {
-            NavHost(controller: controller)
-        }
-    }
-}
-```
-
-And ... Thats it ! Everything is ready, you can now manage the navigation using 
-your newly set navControllers public methods from anywhere in your app !
+Then, build the `NavHost` by passing the instance of `NavController` and place it as the unique view of the window
 
 > **Warning**
-> In order to manipulate the navigation properly, you have to use the same instance 
-> of the `NavController` that you have passed to `NavHost` as parameter.
->
-> Consider using `@EnvironmentObject` or a singleton design pattern.
+> Don't forget to declare `NavController` as `@ObservedObject`.
 
-
-## NavController methods summary
-### push
-Use this method display a new screen.
-You can pass **arguments** through the screen pushed :
-```swift
-private class FirstNameViewModel: ObservableObject {
-    private var controller: NavController = resolve()
-    @Published private(set) var firstName: String = ""
-
-    func setFirstName(value: String) { self.firstName = value }
-    
-    func goToLastName() {
-        controller.push(
-            screenName: "LastName",
-            arguments: ["first_name": firstName]
-        )
-    }
-}
-```
-
-Those arguments are handled into the `NavGraphBuilder` :
 ```swift
 @main
-struct SampleApp: App {
-    @ObservedObject var controller =
-        NavController(
-            root: ...
-        ) { graph in
-            ...
-            graph.screen("LastName") { navParams in
-            //HERE
-                let firstName = navParams["first_name"] as! String
-                LastNameScreen(firstName: firstName)
-            }
-        }
-    ...
-}
-```
+struct YourApp: App {
 
-### pop
-Use this method to remove screens from the stack.
-You can pass **arguments** to the screen that will be displayed back
-and chose a **specific screen** that you want to be at the top of the stack :
-```swift
-private class LastNameViewModel: ObservableObject {
-    private var controller: NavController = resolve()
-    @Published private(set) var lastName: String = ""
-    private(set) var firstName: String = ""
-    
-    func backToFirstName() { controller.pop() } //Simple pop.
-    
-    func backToHome() {
-        controller.pop( //Pop with arguments and specific destination.
-            to: "Home",
-            arguments: [
-                "first_name": firstName,
-                "last_name": lastName,
-            ]
-        )
-    }
-}
-```
-Those arguments are handled into the place where you are navigating back (see [setOnNavigateBack](#setOnNavigateBack))
-
-### setOnNavigateBack
-Allows you to define how the app should handle arguments on a **pop** navigation :
-```swift
-private class HomeViewModel: ObservableObject 
-    private var controller: NavController = resolve()
-    @Published private(set) var firstName: String = ""
-    @Published private(set) var lastName: String = ""
-    
-    private init() {
-        controller.setOnNavigateBack { args in
-            if let firstName = args["first_name"] as? String, !firstName.isEmpty { //HERE
-                self.firstName = firstName
-            }
-            
-            if let lastName = args["last_name"] as? String, !lastName.isEmpty { //AND HERE
-                self.lastName = lastName
-            }
+    @ObservedObject
+    var navController = NavController(root: "ScreenA") { graph in
+        graph.screen("ScreenA") { SplashA() }
+        graph.screen("ScreenB") { ScreenB() }
+        graph.screen("ScreenC") { params in
+            let title = params["title"] as! String
+            ScreenC(title: title)
         }
     }
-...
+
+    var body: some Scene {
+        WindowGroup {
+            NavHost(controller: navController)
+        }
+    }
 }
 ```
 
-### setNewRoot
-Clear the entire screen's stack and set a new screen as root.
+Furthermore inside your screens, the instance of `NavController` can be accessible by using `@EnvironmentObject`.
 ```swift
-private class HomeViewModel: ObservableObject {
-    private var controller: NavController = resolve()
-    
-    func goToAuth() {
-        controller.setNewRoot(screenName: "Login")
+struct ScreenA: View {
+    @EnvironmentOject
+    var navController: NavController
+
+    var body: some View {
+        VStack {
+            Spacer()
+            Text("Screen A")
+                .font(.title)
+            Spacer()
+            Button("Next >") {
+                navController.push(screenName: "ScreenB", transition: .coverFullscreen)
+            }
+        }
     }
 }
 ```
 
 ## Sample
-You can find a sample <a href="https://github.com/hello-sunrise/swiftui-navigation/tree/main/Sample/" target="_blank">HERE</a>
-
+You can find a sample [here](https://github.com/hello-sunrise/swiftui-navigation/tree/main/Sample/).
 
 ## License
 
