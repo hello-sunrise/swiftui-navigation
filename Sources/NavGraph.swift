@@ -2,6 +2,7 @@ import SwiftUI
 
 internal struct ScreenBuilder {
     let name: String
+    let defaultTransition: Transition?
     @ViewBuilder let builder: ([String : Any]) -> AnyView
 }
 
@@ -40,8 +41,9 @@ public class NavGraph {
     ///
     /// - Parameters:
     ///     - name: The name of the screen which will be used for the navigation.
+    ///     - defaultTransition: Default transition for this screen. Default value is nil.
     ///     - contentBuilder: This ViewBuilder defines how the screen will be generated, the dictionary passed as entry parameter works as an arguments map.
-    public func screen(_ name: String, @ViewBuilder contentBuilder: @escaping ([String : Any]) -> some View) {
+    public func screen(_ name: String, defaultTransition: Transition? = nil, @ViewBuilder contentBuilder: @escaping ([String : Any]) -> some View) {
         guard !self.screenBuilders.contains(where: { $0.name == name }) else {
             print("🎱 NavGraph/screen(\(name), contentBuilder:_) 🎱")
             print("🧐 Could not add \"\(name)\" as it already exists. 🧐")
@@ -50,7 +52,7 @@ public class NavGraph {
         }
         
         self.screenBuilders.append(
-            ScreenBuilder(name: name) { AnyView(contentBuilder($0)) }
+            ScreenBuilder(name: name, defaultTransition: defaultTransition) { AnyView(contentBuilder($0)) }
         )
     }
     
@@ -71,9 +73,10 @@ public class NavGraph {
     ///
     /// - Parameters:
     ///     - name: The name of the screen which will be used for the navigation.
+    ///     - defaultTransition: Default transition for this screen. Default value is nil.
     ///     - contentBuilder: This ViewBuilder defines how the screen will be generated.
-    public func screen(_ name: String, @ViewBuilder contentBuilder: @escaping () -> some View) {
-        self.screen(name) { _ in contentBuilder() }
+    public func screen(_ name: String, defaultTransition: Transition? = nil, @ViewBuilder contentBuilder: @escaping () -> some View) {
+        self.screen(name, defaultTransition: defaultTransition) { _ in contentBuilder() }
     }
     
     internal func screenBuilder(of screenName: String) -> ScreenBuilder? {

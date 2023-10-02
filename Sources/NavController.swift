@@ -82,26 +82,30 @@ import SwiftUI
 public class NavController: ObservableObject {
     private let navGraph = NavGraph()
     private let root: String
+    private let defaultTransition: Transition
     private var screenStack: ScreenStack!
     
-    internal var backgroundColor: Color?
+    internal var backgroundColor: Color!
     
     internal var viewController: UIViewController? {
         didSet {
             guard let viewController = viewController else { return }
-            let rootScreen = buildScreen(screenName: root, arguments: [:])!
+            let rootScreen = navGraph.screenBuilder(of: root)!.screen(navController: self, arguments: [:])
             self.screenStack = ScreenStack(viewController: viewController, screen: rootScreen)
         }
     }
     
     /// - Parameters:
     ///     - root: The name of the first screen that will be displayed.
+    ///     - defaultTransition: Default transition that will be used if not specified.
     ///     - builder: ``NavGraphBuilder`` that defines how the app screens will be built.
     public init(
         root: String,
+        defaultTransition: Transition = .none,
         builder: NavGraphBuilder
     ) {
         self.root = root
+        self.defaultTransition = defaultTransition
         builder(navGraph)
     }
     
@@ -118,7 +122,7 @@ public class NavController: ObservableObject {
     /// This method uses the transition `TransitionStyle.coverFullscreen`.
     ///
     public func setNewRoot(screenName: String, arguments: [String: Any] = [:]) {
-        guard let newScreen = buildScreen(screenName: screenName, arguments: arguments) else { return }
+        guard let newScreen = navGraph.screenBuilder(of: screenName)?.screen(navController: self, arguments: arguments) else { return }
         screenStack.clear(asNewRoot: newScreen)
     }
     
@@ -167,16 +171,19 @@ public class NavController: ObservableObject {
     /// - Parameters:
     ///     - screenName: The name of the screen that will be used to retrieve a ViewBuilding from the `NavGraph`.
     ///     - arguments: This `Dictionary` holds, under its key/value pairs, data that you want to share with the newly pushed screen.
-    ///     - transition: Sets the animation that will be triggered.
+    ///     - transition: Sets the animation that will be triggered. Default is the value of `defaultTransition`.
     ///     - completion: The block to execute after the push finishes. This block has no return value and takes no parameters.
     public func push(
         screenName: String,
         arguments: [String : Any] = [:],
-        transition: TransitionStyle = .coverHorizontal,
+        transition: Transition? = nil,
         completion: @escaping () -> Void = {}
     ) {
-        guard let newScreen = buildScreen(screenName: screenName, arguments: arguments) else { return }
-        screenStack.push(screen: newScreen, transition: transition, completion: completion)
+        guard let screenBuilder = navGraph.screenBuilder(of: screenName) else  { return }
+        let screen = screenBuilder.screen(navController: self, arguments: arguments)
+        let transition = transition ?? screenBuilder.defaultTransition ?? defaultTransition
+
+        screenStack.push(screen: screen, transition: transition, completion: completion)
     }
     
     /// Push a new screen to the backstack.
@@ -195,12 +202,12 @@ public class NavController: ObservableObject {
     ///
     /// - Parameters:
     ///     - screenName: The name of the screen that will be used to retrieve a ViewBuilding from the `NavGraph`.
-    ///     - transition: Sets the animation that will be triggered.
+    ///     - transition: Sets the animation that will be triggered. Default is the value of `defaultTransition`.
     ///     - completion: The block to execute after the push finishes. This block has no return value and takes no parameters.
     ///     - content: This `() -> some View` closure defines the screen that you want to see displayed.
     public func push(
         screenName: String,
-        transition: TransitionStyle = .coverHorizontal,
+        transition: Transition? = nil,
         completion: @escaping () -> Void = {},
         @ViewBuilder content: () -> some View
     ) {
