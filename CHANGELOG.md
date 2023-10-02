@@ -18,6 +18,18 @@ Mention whether you follow Semantic Versioning.
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+## [1.2.0] - 2023-10-02
+
+### Added
+- `NavHost` parameter `windowBackgroundColor`
+- Parameter `defaultTransition` to `NavGraph.screen()`
+
+### Changed
+- Renamed `TransitionStyle` to `Transition`
+
+### Fixed
+- `backgroundColor` not changing when switching between light and dark mode 
+
 ## [1.1.0] - 2023-07-19
 
 ### Added
