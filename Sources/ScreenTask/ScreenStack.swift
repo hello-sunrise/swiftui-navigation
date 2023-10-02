@@ -1,6 +1,6 @@
 import SwiftUI
 
-internal class ScreenStack {
+internal class ScreenStack: NSObject {
     let rootViewController: UIViewController
     
     var currentScreen: Screen
@@ -13,7 +13,7 @@ internal class ScreenStack {
     
     func push(
         screen: Screen,
-        transition: TransitionStyle,
+        transition: Transition,
         completion: @escaping () -> Void
     ) {
         let viewController: UIViewController = screen
@@ -36,6 +36,7 @@ internal class ScreenStack {
         case .sheet:
             viewController.modalTransitionStyle = .coverVertical
             viewController.modalPresentationStyle = .pageSheet
+            viewController.presentationController?.delegate = self
         }
         
         currentScreen.present(viewController, animated: transition != .none, completion: completion)
@@ -79,6 +80,14 @@ internal class ScreenStack {
     func pop(arguments: [String : Any]) {
         popUntil(screenName: currentScreen.name, inclusive: true, arguments: arguments)
     }
+}
+
+extension ScreenStack: UIAdaptivePresentationControllerDelegate {
+    
+    func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
+        pop(arguments: [:])
+    }
+    
 }
 
 private extension UIViewController {

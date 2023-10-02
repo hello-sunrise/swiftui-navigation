@@ -4,7 +4,7 @@
 /// ```
 ///   navigationController.push(screenName: "ScreenB", transition: .coverHorizontal)
 /// ```
-public enum TransitionStyle {
+public enum Transition {
     /// The transition between two screens will be instant, no animation will be applied.
     case none
     /// The transition will cover the entire screen and a cross-disolve animation will be executed.
