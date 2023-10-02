@@ -205,8 +205,8 @@ public class NavController: ObservableObject {
         @ViewBuilder content: () -> some View
     ) {
         screenStack.push(
-            screen: Screen(name: screenName, backgroundColor: backgroundColor, view: content().environmentObject(self)),
-            transition: transition,
+            screen: Screen(name: screenName, backgroundColor: self.backgroundColor, view: content().environmentObject(self)),
+            transition: transition ?? defaultTransition,
             completion: completion
         )
     }
@@ -235,10 +235,12 @@ public class NavController: ObservableObject {
         screenStack.currentScreen.onNavigateTo = block
     }
     
-    private func buildScreen(screenName: String, arguments: [String : Any] = [:]) -> Screen? {
-        guard let view = navGraph.screenBuilder(of: screenName)?.builder(arguments) else {
-            return nil
-        }
-        return Screen(name: screenName, backgroundColor: backgroundColor, view: view.environmentObject(self))
+}
+
+private extension ScreenBuilder {
+    
+    func screen(navController: NavController, arguments: [String: Any]) -> Screen {
+        Screen(name: name, backgroundColor: navController.backgroundColor, view: builder(arguments).environmentObject(navController))
     }
+    
 }
