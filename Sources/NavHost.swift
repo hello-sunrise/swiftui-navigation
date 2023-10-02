@@ -22,25 +22,26 @@ import SwiftUI
 /// The complete list of default modifiers provides a large set of controls
 /// for managing this view.
 public struct NavHost: View {
+    private let windowBackgroundColor: Color?
+    
     @ObservedObject
     private var controller: NavController
     
     /// - Parameters:
     ///     - controller: ``NavController`` instance that will control the screens.
     ///     - backgroundColor: Will be used as default background color for all the screens.
-    public init(controller: NavController, backgroundColor: Color) {
+    ///     - windowBackgroundColor: Will set the window's background color. Default is nil
+    public init(controller: NavController, backgroundColor: Color, windowBackgroundColor: Color? = nil) {
+        self.windowBackgroundColor = windowBackgroundColor
         self.controller = controller
         self.controller.backgroundColor = backgroundColor
     }
-    
+        
     public var body: some View {
         EmptyView()
             .onAppear {
                 if controller.viewController == nil {
-                    window?.backgroundColor = .clear
-                    if let backgroundColor = controller.backgroundColor {
-                        window?.backgroundColor = UIColor(backgroundColor)
-                    }
+                    window?.backgroundColor = windowBackgroundColor?.uiColor
                     controller.viewController = window?.rootViewController
                 }
             }
