@@ -70,11 +70,10 @@ internal class ScreenStack: NSObject {
 }
 
 extension ScreenStack: UIAdaptivePresentationControllerDelegate {
-    
-    func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
-        pop(arguments: [:])
+    func presentationControllerWillDismiss(_ presentationController: UIPresentationController) {
+        currentScreen = presentationController.presentingViewController.screen
+        currentScreen.onNavigateTo([:])
     }
-    
 }
 
 private extension UIViewController {
