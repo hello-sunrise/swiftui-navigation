@@ -58,24 +58,22 @@ import SwiftUI
 ///        NavHost(controller: controller)
 /// ```
 ///
-/// > Warning ;
-/// > To use the ``NavController`` properly you have to use the same
-/// > instance of the class that you have initialized with the graph, consider
-/// > using singleton pattern or external DI library as ``Swinject``.
-///
-/// After that, inject the navController anywhere you want to use it.
+/// Furthermore inside your screens, the instance of `NavController` can be accessible by using `@EnvironmentObject`.
 /// ```
 ///private class HomeViewModel: ObservableObject {
-///    private var controller: NavController = resolve()
+///    @EnvironmentOject
+///    var navController: NavController
 ///
-///    func goToFirstName() {
-///        controller.push(
-///            screenName: Route.FirstName.name
-///        )
-///    }
-///
-///    func backToSplash() {
-///        controller.pop()
+///    var body: some View {
+///        VStack {
+///            Spacer()
+///            Text("Screen A")
+///                .font(.title)
+///            Spacer()
+///            Button("Next >") {
+///                navController.push(screenName: "ScreenB", transition: .coverFullscreen)
+///            }
+///        }
 ///    }
 ///}
 /// ```
@@ -121,9 +119,13 @@ public class NavController: ObservableObject {
     /// ```
     /// This method uses the transition `TransitionStyle.coverFullscreen`.
     ///
-    public func setNewRoot(screenName: String, arguments: [String: Any] = [:]) {
+    /// - Parameters:
+    ///     - screenName: The screen name allows you to navigate back to a chosen screen by entering its name.
+    ///     - arguments: This `Dictionary` holds, under its key/value pairs, data that you want to share with the popped screen.
+    ///     - animated: Pass true to animate the transition; otherwise, pass false.
+    public func setNewRoot(screenName: String, arguments: [String: Any] = [:], animated: Bool = true) {
         guard let newScreen = navGraph.screenBuilder(of: screenName)?.screen(navController: self, arguments: arguments) else { return }
-        screenStack.clear(asNewRoot: newScreen)
+        screenStack.clear(asNewRoot: newScreen, animated: animated)
     }
     
     /// Display a screen that was shown previously into the hierarchy.
@@ -144,17 +146,18 @@ public class NavController: ObservableObject {
     /// Each screen shown after `ScreenB` included are erased from screenStack.
     ///
     /// - Parameters:
-    ///     - screenName: This `String?` allows you to navigate back to a chosen screen by entering its name.
-    ///     - inclusive: The targetted screen is also popped out of the stack.
+    ///     - screenName: The screen name allows you to navigate back to a chosen screen by entering its name.
     ///     - arguments: This `Dictionary` holds, under its key/value pairs, data that you want to share with the popped screen.
-    public func pop(to screenName: String? = nil, inclusive: Bool = false, arguments: [String : Any] = [:]) {
+    ///     - inclusive: Pass true to popped out of the stack `screenName`, otherwise pass false.
+    ///     - animated: Pass true to animate the transition; otherwise, pass false.
+    public func pop(to screenName: String? = nil, arguments: [String : Any] = [:], inclusive: Bool = false, animated: Bool = true) {
         if let screenName = screenName {
-            screenStack.popUntil(screenName: screenName, inclusive: inclusive, arguments: arguments)
+            screenStack.popUntil(screenName: screenName, arguments: arguments, inclusive: inclusive, animated: animated)
         } else {
-            screenStack.pop(arguments: arguments)
+            screenStack.pop(arguments: arguments, animated: animated)
         }
     }
-        
+    
     /// Push a new screen to the backstack.
     ///
     /// Use this method to add a screen to the last navigation contexts stack.
@@ -167,23 +170,33 @@ public class NavController: ObservableObject {
     ///
     /// ```
     /// If the controller cannot find any related view from the graph, console will prompt logs.
-    /// 
+    ///
     /// - Parameters:
-    ///     - screenName: The name of the screen that will be used to retrieve a ViewBuilding from the `NavGraph`.
+    ///     - screenName: The screen name of the screen that will be used to retrieve a ViewBuilding from the `NavGraph`.
     ///     - arguments: This `Dictionary` holds, under its key/value pairs, data that you want to share with the newly pushed screen.
-    ///     - transition: Sets the animation that will be triggered. Default is the value of `defaultTransition`.
+    ///     - pushTransition: Sets the animation that will be triggered when pushing this screen. Default is the value of `defaultTransition`.
+    ///     - popTransition: Sets the animation that will be triggered when popping out this screen. Default is the value of `defaultTransition`.
+    ///     - animated: Pass true to animate the transition; otherwise, pass false.
     ///     - completion: The block to execute after the push finishes. This block has no return value and takes no parameters.
     public func push(
         screenName: String,
         arguments: [String : Any] = [:],
-        transition: Transition? = nil,
+        pushTransition: Transition? = nil,
+        popTransition: Transition? = nil,
+        animated: Bool = true,
         completion: @escaping () -> Void = {}
     ) {
         guard let screenBuilder = navGraph.screenBuilder(of: screenName) else  { return }
         let screen = screenBuilder.screen(navController: self, arguments: arguments)
-        let transition = transition ?? screenBuilder.defaultTransition ?? defaultTransition
-
-        screenStack.push(screen: screen, transition: transition, completion: completion)
+        let defaultTransition = screenBuilder.defaultTransition ?? defaultTransition
+        
+        screenStack.push(
+            screen: screen,
+            pushTransition: pushTransition ?? defaultTransition,
+            popTransition: popTransition ?? defaultTransition,
+            animated: animated,
+            completion: completion
+        )
     }
     
     /// Push a new screen to the backstack.
@@ -202,18 +215,24 @@ public class NavController: ObservableObject {
     ///
     /// - Parameters:
     ///     - screenName: The name of the screen that will be used to retrieve a ViewBuilding from the `NavGraph`.
-    ///     - transition: Sets the animation that will be triggered. Default is the value of `defaultTransition`.
+    ///     - pushTransition: Sets the animation that will be triggered when pushing this screen. Default is the value of `defaultTransition`.
+    ///     - popTransition: Sets the animation that will be triggered when popping out this screen. Default is the value of `defaultTransition`.
+    ///     - animated: Pass true to animate the transition; otherwise, pass false.
     ///     - completion: The block to execute after the push finishes. This block has no return value and takes no parameters.
     ///     - content: This `() -> some View` closure defines the screen that you want to see displayed.
     public func push(
         screenName: String,
-        transition: Transition? = nil,
+        pushTransition: Transition? = nil,
+        popTransition: Transition? = nil,
+        animated: Bool = true,
         completion: @escaping () -> Void = {},
         @ViewBuilder content: () -> some View
     ) {
         screenStack.push(
             screen: Screen(name: screenName, backgroundColor: self.backgroundColor, view: content().environmentObject(self)),
-            transition: transition ?? defaultTransition,
+            pushTransition: pushTransition ?? defaultTransition,
+            popTransition: popTransition ?? defaultTransition,
+            animated: animated,
             completion: completion
         )
     }
@@ -241,13 +260,10 @@ public class NavController: ObservableObject {
     public func setOnNavigateBack(block: @escaping ([String : Any]) -> Void) {
         screenStack.currentScreen.onNavigateTo = block
     }
-    
 }
 
 private extension ScreenBuilder {
-    
     func screen(navController: NavController, arguments: [String: Any]) -> Screen {
         Screen(name: name, backgroundColor: navController.backgroundColor, view: builder(arguments).environmentObject(navController))
     }
-    
 }

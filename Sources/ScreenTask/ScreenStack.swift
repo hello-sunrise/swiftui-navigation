@@ -13,51 +13,25 @@ internal class ScreenStack: NSObject {
     
     func push(
         screen: Screen,
-        transition: Transition,
+        pushTransition: Transition,
+        popTransition: Transition,
+        animated: Bool,
         completion: @escaping () -> Void
     ) {
-        let viewController: UIViewController = screen
-        switch transition {
-        case .none:
-            viewController.modalPresentationStyle = .fullScreen
-        case .coverFullscreen:
-            viewController.modalTransitionStyle = .crossDissolve
-            viewController.modalPresentationStyle = .fullScreen
-        case .coverOverFullscreen:
-            viewController.view.backgroundColor = nil
-            viewController.modalTransitionStyle = .crossDissolve
-            viewController.modalPresentationStyle = .overFullScreen
-        case .coverVertical:
-            viewController.modalTransitionStyle = .coverVertical
-            viewController.modalPresentationStyle = .fullScreen
-        case .coverHorizontal:
-            viewController.modalPresentationStyle = .custom
-            viewController.transitioningDelegate = TransitionDelegate.coverHorizontal
-        case .sheet:
-            viewController.modalTransitionStyle = .coverVertical
-            viewController.modalPresentationStyle = .pageSheet
-            viewController.presentationController?.delegate = self
+        screen.transition = pushTransition
+        if (pushTransition == .sheet) {
+            screen.presentationController?.delegate = self
         }
-        
-        currentScreen.present(viewController, animated: transition != .none, completion: completion)
+        currentScreen.present(screen, animated: animated && pushTransition != .none) {
+            if popTransition != pushTransition {
+                screen.transition = popTransition
+            }
+            completion()
+        }
         currentScreen = screen
     }
     
-    func clear(asNewRoot screen: Screen? = nil) {
-        if let screen = screen {
-            rootViewController.setScreen(screen, animated: true)
-            currentScreen = screen
-        }
-        if rootViewController.presentedViewController != nil {
-            rootViewController.dismiss(animated: false)
-        }
-        
-        print("🎱 ScreenStack/clear() 🎱")
-        print("⚪️ \(self.currentScreen.name) is the new root. ⚪️")
-
-    }
-    
-    func popUntil(screenName: String, inclusive: Bool, arguments: [String: Any]) {
+    func popUntil(screenName: String, arguments: [String: Any], inclusive: Bool, animated: Bool) {
         var screen: Screen! = currentScreen
         
         while screen != nil && screen.name != screenName {
@@ -69,16 +43,29 @@ internal class ScreenStack: NSObject {
             print("🚧 It should never happen : please contact developers team. 🚧")
             return
         }
+        
+        currentScreen.transition = screen.transition
         if inclusive, let parent = screen.presentingViewController?.screen {
             screen = parent
         }
-        screen.dismiss(animated: true)
+        
+        screen.dismiss(animated: animated)
         currentScreen = screen
         currentScreen.onNavigateTo(arguments)
     }
     
-    func pop(arguments: [String : Any]) {
-        popUntil(screenName: currentScreen.name, inclusive: true, arguments: arguments)
+    func pop(arguments: [String : Any], animated: Bool) {
+        popUntil(screenName: currentScreen.name, arguments: arguments, inclusive: true, animated: animated)
+    }
+    
+    func clear(asNewRoot screen: Screen? = nil, animated: Bool) {
+        if let screen = screen {
+            rootViewController.setScreen(screen, animated: animated)
+            currentScreen = screen
+        }
+        if rootViewController.presentedViewController != nil {
+            rootViewController.dismiss(animated: false)
+        }
     }
 }
 
