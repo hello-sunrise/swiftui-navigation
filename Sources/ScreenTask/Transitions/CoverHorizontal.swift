@@ -48,22 +48,28 @@ private class LeftToRightTransition: NSObject, UIViewControllerAnimatedTransitio
         fromViewController.view.layer.shadowOpacity = 0.2
         fromViewController.view.layer.shadowRadius = 10
         
-        UIView.animate(
-            withDuration: transitionDuration(using: transitionContext),
-            delay: 0.0,
-            options: .curveEaseIn,
-            animations: {
-                fromViewController.view.frame = initialFrame.offsetBy(dx: initialFrame.width, dy: 0)
-                toViewController.view.frame = initialFrame
-            },
-            completion: { finished in
-                fromViewController.view.frame = initialFrame.offsetBy(dx: initialFrame.width, dy: 0)
-                fromViewController.view.layer.shadowOpacity = 0.0
-                fromViewController.view.removeFromSuperview()
-                toViewController.view.frame = initialFrame
-                transitionContext.completeTransition(finished)
-            }
-        )
+        let completion = { (finished: Bool) in
+            fromViewController.view.frame = initialFrame.offsetBy(dx: initialFrame.width, dy: 0)
+            fromViewController.view.layer.shadowOpacity = 0.0
+            fromViewController.view.removeFromSuperview()
+            toViewController.view.frame = initialFrame
+            transitionContext.completeTransition(finished)
+        }
+        
+        if transitionContext.isAnimated && !toViewController.isBeingDismissed {
+            UIView.animate(
+                withDuration: transitionDuration(using: transitionContext),
+                delay: 0.0,
+                options: .curveEaseIn,
+                animations: {
+                    fromViewController.view.frame = initialFrame.offsetBy(dx: initialFrame.width, dy: 0)
+                    toViewController.view.frame = initialFrame
+                },
+                completion: completion
+            )
+        } else {
+            completion(true)
+        }
     }
 }
 
@@ -87,20 +93,26 @@ private class RightToLeftTransition: NSObject, UIViewControllerAnimatedTransitio
         toViewController.view.layer.shadowOpacity = 0.2
         toViewController.view.layer.shadowRadius = 10
         
-        UIView.animate(
-            withDuration: transitionDuration(using: transitionContext),
-            delay: 0.0,
-            options: .curveEaseIn,
-            animations: {
-                fromViewController.view.frame = initialFrame.offsetBy(dx: initialFrame.width * -0.3, dy: 0)
-                toViewController.view.frame = initialFrame
-            },
-            completion: { finished in
-                fromViewController.view.frame = initialFrame
-                toViewController.view.frame = initialFrame
-                toViewController.view.layer.shadowOpacity = 0.0
-                transitionContext.completeTransition(finished)
-            }
-        )
+        let completion = { finished in
+            fromViewController.view.frame = initialFrame
+            toViewController.view.frame = initialFrame
+            toViewController.view.layer.shadowOpacity = 0.0
+            transitionContext.completeTransition(finished)
+        }
+        
+        if transitionContext.isAnimated {
+            UIView.animate(
+                withDuration: transitionDuration(using: transitionContext),
+                delay: 0.0,
+                options: .curveEaseIn,
+                animations: {
+                    fromViewController.view.frame = initialFrame.offsetBy(dx: initialFrame.width * -0.3, dy: 0)
+                    toViewController.view.frame = initialFrame
+                },
+                completion: completion
+            )
+        } else {
+            completion(true)
+        }
     }
 }
