@@ -18,6 +18,18 @@ Mention whether you follow Semantic Versioning.
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+## [1.3.0] - 2023-10-11
+
+### Added
+- Parameter `animated` to `NavController` functions
+- Parameters `pushTransition` and `popTransition` to `NavController.push()` 
+
+### Removed
+- Parameter `transition` to `NavController.push()`
+
+### Fixed
+- Dismissing detection of `Transition.sheet`
+
 ## [1.2.0] - 2023-10-02
 
 ### Added
