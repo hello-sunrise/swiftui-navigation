@@ -1,10 +1,13 @@
 import SwiftUI
 
-internal class Screen: UIHostingController<AnyView>, Identifiable {
+internal class Screen: UIHostingController<ScreenView>, Identifiable {
     let id: UUID = UUID()
     let name: String
     let backgroundColor: Color
     var onNavigateTo: ([String : Any]) -> Void = { _ in }
+
+    @ObservedObject
+    private var lifecycle: LifecycleObservable
     
     init(
         name: String,
@@ -13,7 +16,9 @@ internal class Screen: UIHostingController<AnyView>, Identifiable {
     ) {
         self.name = name
         self.backgroundColor = backgroundColor
-        super.init(rootView: (view as? AnyView) ?? AnyView(view))
+        let lifecycle = LifecycleObservable()
+        self.lifecycle = lifecycle
+        super.init(rootView: ScreenView(anyView: (view as? AnyView) ?? AnyView(view), lifecycle: lifecycle))
         self.view.backgroundColor = backgroundColor.uiColor
     }
     
@@ -56,4 +61,27 @@ internal class Screen: UIHostingController<AnyView>, Identifiable {
             }
         }
     }
+        
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if isBeingDismissed || isMovingFromParent {
+            lifecycle.isRemovedFromStack = true
+        }
+    }
+}
+
+internal class LifecycleObservable: ObservableObject {
+    @Published
+    var isRemovedFromStack: Bool = false
+}
+
+internal struct ScreenView: View {
+    let anyView: AnyView
+    @ObservedObject
+    var lifecycle: LifecycleObservable
+    
+    var body: some View {
+        anyView.environment(\.isRemovedFromStack, self.lifecycle.isRemovedFromStack)
+    }
+    
 }
