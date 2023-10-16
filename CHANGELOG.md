@@ -18,6 +18,11 @@ Mention whether you follow Semantic Versioning.
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+## [1.4.0] - 2023-10-16
+
+### Added
+- EnvironmentValues `\.isRemovedFromStack`
+
 ## [1.3.0] - 2023-10-11
 
 ### Added
