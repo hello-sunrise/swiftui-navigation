@@ -43,7 +43,7 @@ internal class Screen: UIHostingController<ScreenView>, Identifiable {
                 modalTransitionStyle = .crossDissolve
                 presentationStyle = .fullScreen
             case .coverOverFullscreen:
-                view.backgroundColor = nil
+                view.backgroundColor = .clear
                 modalTransitionStyle = .crossDissolve
                 presentationStyle = .overFullScreen
             case .coverVertical:
