@@ -3,7 +3,13 @@ import SwiftUI
 internal class ScreenStack: NSObject {
     let rootViewController: UIViewController
     
-    var currentScreen: Screen
+    var currentScreen: Screen {
+        didSet {
+            onScreenChanged?(currentScreen)
+        }
+    }
+    
+    var onScreenChanged: ((Screen) -> Void)?
     
     init(viewController: UIViewController, screen: Screen) {
         self.rootViewController = viewController

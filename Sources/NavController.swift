@@ -82,6 +82,7 @@ public class NavController: ObservableObject {
     private let root: String
     private let defaultTransition: Transition
     private var screenStack: ScreenStack!
+    private var onNavigationChange: ((String, [String: Any]) -> Void)?
     
     internal var backgroundColor: Color!
     
@@ -90,6 +91,10 @@ public class NavController: ObservableObject {
             guard let viewController = viewController else { return }
             let rootScreen = navGraph.screenBuilder(of: root)!.screen(navController: self, arguments: [:])
             self.screenStack = ScreenStack(viewController: viewController, screen: rootScreen)
+            onNavigationChange?(screenStack.currentScreen.name, screenStack.currentScreen.arguments)
+            screenStack.onScreenChanged = { [weak self] screen in
+                self?.onNavigationChange?(screen.name, screen.arguments)
+            }
         }
     }
     
@@ -229,7 +234,7 @@ public class NavController: ObservableObject {
         @ViewBuilder content: () -> some View
     ) {
         screenStack.push(
-            screen: Screen(name: screenName, backgroundColor: self.backgroundColor, view: content().environmentObject(self)),
+            screen: Screen(name: screenName, arguments: [:], backgroundColor: self.backgroundColor, view: content().environmentObject(self)),
             pushTransition: pushTransition ?? defaultTransition,
             popTransition: popTransition ?? defaultTransition,
             animated: animated,
@@ -237,7 +242,7 @@ public class NavController: ObservableObject {
         )
     }
     
-    /// Saves back navigation instructions
+    /// Saves back navigation instructions.
     ///
     /// When ``NavController/setOnNavigateBack(block:)`` is called, the instructions
     /// are linked to the calling screen, whenever we navigate back to it, the lambda contained into the closure is triggered.
@@ -260,10 +265,32 @@ public class NavController: ObservableObject {
     public func setOnNavigateBack(block: @escaping ([String : Any]) -> Void) {
         screenStack.currentScreen.onNavigateTo = block
     }
+    
+    /// Set a listener to be executed when the navigation changes.
+    ///
+    /// Use this method to listen any change in the navigation by capturing the current screen and its arguments.
+    /// ```
+///         controller.setOnNavigationChange { screen, arguments in
+///             print("New screen \(screen) displayed with arguments: \(arguments)")
+///         }
+    /// ```
+    ///
+    /// - Parameters:
+    ///     - block: This lambda to be executed whenever the screen changes in the navigation.
+    public func setOnNavigationChange(block: @escaping (String, [String: Any]) -> Void) {
+        guard let screenStack = self.screenStack else {
+            self.onNavigationChange = block
+            return
+        }
+        block(screenStack.currentScreen.name, screenStack.currentScreen.arguments)
+        screenStack.onScreenChanged = { screen in
+            block(screen.name, screen.arguments)
+        }
+    }
 }
 
 private extension ScreenBuilder {
     func screen(navController: NavController, arguments: [String: Any]) -> Screen {
-        Screen(name: name, backgroundColor: navController.backgroundColor, view: builder(arguments).environmentObject(navController))
+        Screen(name: name, arguments: arguments, backgroundColor: navController.backgroundColor, view: builder(arguments).environmentObject(navController))
     }
 }
