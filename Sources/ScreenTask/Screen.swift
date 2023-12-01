@@ -3,6 +3,7 @@ import SwiftUI
 internal class Screen: UIHostingController<ScreenView>, Identifiable {
     let id: UUID = UUID()
     let name: String
+    let arguments: [String: Any]
     let backgroundColor: Color
     var onNavigateTo: ([String : Any]) -> Void = { _ in }
 
@@ -11,10 +12,12 @@ internal class Screen: UIHostingController<ScreenView>, Identifiable {
     
     init(
         name: String,
+        arguments: [String: Any],
         backgroundColor: Color,
         view: some View
     ) {
         self.name = name
+        self.arguments = arguments
         self.backgroundColor = backgroundColor
         let lifecycle = LifecycleObservable()
         self.lifecycle = lifecycle
