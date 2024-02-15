@@ -12,13 +12,15 @@ let package = Package(
             name: "SwiftNav",
             targets: ["SwiftNav"]),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/dfed/swift-async-queue", from: "0.5.1")
+    ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "SwiftNav",
-            dependencies: [],
+            dependencies: [.product(name: "AsyncQueue", package: "swift-async-queue")],
             path: "Sources"
         )
     ]
