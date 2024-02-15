@@ -182,14 +182,12 @@ public class NavController: ObservableObject {
     ///     - pushTransition: Sets the animation that will be triggered when pushing this screen. Default is the value of `defaultTransition`.
     ///     - popTransition: Sets the animation that will be triggered when popping out this screen. Default is the value of `defaultTransition`.
     ///     - animated: Pass true to animate the transition; otherwise, pass false.
-    ///     - completion: The block to execute after the push finishes. This block has no return value and takes no parameters.
     public func push(
         screenName: String,
         arguments: [String : Any] = [:],
         pushTransition: Transition? = nil,
         popTransition: Transition? = nil,
-        animated: Bool = true,
-        completion: @escaping () -> Void = {}
+        animated: Bool = true
     ) {
         guard let screenBuilder = navGraph.screenBuilder(of: screenName) else  { return }
         let screen = screenBuilder.screen(navController: self, arguments: arguments)
@@ -199,8 +197,7 @@ public class NavController: ObservableObject {
             screen: screen,
             pushTransition: pushTransition ?? defaultTransition,
             popTransition: popTransition ?? defaultTransition,
-            animated: animated,
-            completion: completion
+            animated: animated
         )
     }
     
@@ -223,22 +220,19 @@ public class NavController: ObservableObject {
     ///     - pushTransition: Sets the animation that will be triggered when pushing this screen. Default is the value of `defaultTransition`.
     ///     - popTransition: Sets the animation that will be triggered when popping out this screen. Default is the value of `defaultTransition`.
     ///     - animated: Pass true to animate the transition; otherwise, pass false.
-    ///     - completion: The block to execute after the push finishes. This block has no return value and takes no parameters.
     ///     - content: This `() -> some View` closure defines the screen that you want to see displayed.
     public func push(
         screenName: String,
         pushTransition: Transition? = nil,
         popTransition: Transition? = nil,
         animated: Bool = true,
-        completion: @escaping () -> Void = {},
         @ViewBuilder content: () -> some View
     ) {
         screenStack.push(
             screen: Screen(name: screenName, arguments: [:], backgroundColor: self.backgroundColor, view: content().environmentObject(self)),
             pushTransition: pushTransition ?? defaultTransition,
             popTransition: popTransition ?? defaultTransition,
-            animated: animated,
-            completion: completion
+            animated: animated
         )
     }
     
