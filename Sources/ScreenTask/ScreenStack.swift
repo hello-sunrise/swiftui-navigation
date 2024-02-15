@@ -1,6 +1,9 @@
 import SwiftUI
+import AsyncQueue
 
 internal class ScreenStack: NSObject {
+    private let queue = FIFOQueue(priority: .userInitiated)
+    
     let rootViewController: UIViewController
     
     var currentScreen: Screen {
@@ -13,51 +16,55 @@ internal class ScreenStack: NSObject {
     
     init(viewController: UIViewController, screen: Screen) {
         self.rootViewController = viewController
-        self.rootViewController.setScreen(screen, animated: false)
         self.currentScreen = screen
+        super.init()
+        queue.enqueue {
+            await self.rootViewController.setScreen(screen, animated: false)
+        }
     }
     
     func push(
         screen: Screen,
         pushTransition: Transition,
         popTransition: Transition,
-        animated: Bool,
-        completion: @escaping () -> Void
+        animated: Bool
     ) {
-        screen.transition = pushTransition
-        if (pushTransition == .sheet) {
-            screen.presentationController?.delegate = self
-        }
-        currentScreen.present(screen, animated: animated && pushTransition != .none) {
+        queue.enqueue { @MainActor in
+            screen.transition = pushTransition
+            if (pushTransition == .sheet) {
+                screen.presentationController?.delegate = self
+            }
+            await self.currentScreen.present(screen, animated: animated && pushTransition != .none)
             if popTransition != pushTransition {
                 screen.transition = popTransition
             }
-            completion()
+            self.currentScreen = screen
         }
-        currentScreen = screen
     }
     
     func popUntil(screenName: String, arguments: [String: Any], inclusive: Bool, animated: Bool) {
-        var screen: Screen! = currentScreen
-        
-        while screen != nil && screen.name != screenName {
-            screen = screen.presentingViewController?.screen
+        queue.enqueue { @MainActor in
+            var screen: Screen! = self.currentScreen
+            
+            while screen != nil && screen.name != screenName {
+                screen = screen.presentingViewController?.screen
+            }
+            if screen == nil {
+                print("🎱 ScreenStack/popUntil(screenName: \(screenName), arguments: \(arguments)) 🎱")
+                print("🧐 Could not retrieve any screen named \"\(screenName)\" in this hierarchy. 🧐")
+                print("🚧 It should never happen : please contact developers team. 🚧")
+                return
+            }
+            
+            self.currentScreen.transition = screen.transition
+            if inclusive, let parent = screen.presentingViewController?.screen {
+                screen = parent
+            }
+            
+            await screen.dismiss(animated: animated)
+            self.currentScreen = screen
+            self.currentScreen.onNavigateTo(arguments)
         }
-        if screen == nil {
-            print("🎱 ScreenStack/popUntil(screenName: \(screenName), arguments: \(arguments)) 🎱")
-            print("🧐 Could not retrieve any screen named \"\(screenName)\" in this hierarchy. 🧐")
-            print("🚧 It should never happen : please contact developers team. 🚧")
-            return
-        }
-        
-        currentScreen.transition = screen.transition
-        if inclusive, let parent = screen.presentingViewController?.screen {
-            screen = parent
-        }
-        
-        screen.dismiss(animated: animated)
-        currentScreen = screen
-        currentScreen.onNavigateTo(arguments)
     }
     
     func pop(arguments: [String : Any], animated: Bool) {
@@ -65,12 +72,14 @@ internal class ScreenStack: NSObject {
     }
     
     func clear(asNewRoot screen: Screen? = nil, animated: Bool) {
-        if let screen = screen {
-            rootViewController.setScreen(screen, animated: animated)
-            currentScreen = screen
-        }
-        if rootViewController.presentedViewController != nil {
-            rootViewController.dismiss(animated: false)
+        queue.enqueue { @MainActor in
+            if let screen = screen {
+                await self.rootViewController.setScreen(screen, animated: animated)
+                self.currentScreen = screen
+            }
+            if self.rootViewController.presentedViewController != nil {
+                await self.rootViewController.dismiss(animated: false)
+            }
         }
     }
 }
@@ -87,7 +96,7 @@ private extension UIViewController {
         self as? Screen ?? (children.first as! Screen)
     }
     
-    func setScreen(_ screen: Screen, animated: Bool) {
+    func setScreen(_ screen: Screen, animated: Bool) async {
         let oldScreen: Screen? = children.first as? Screen
         oldScreen?.view.alpha = 1.0
         
@@ -95,23 +104,42 @@ private extension UIViewController {
         screen.view.frame = view.frame
         screen.view.alpha = 0.0
         view.addSubview(screen.view)
-        let completion = { (finished: Bool) -> Void in
-            screen.view.alpha = 1.0
-            screen.didMove(toParent: self)
-            if let oldScreen = oldScreen {
-                oldScreen.willMove(toParent: nil)
-                oldScreen.view.removeFromSuperview()
-                oldScreen.removeFromParent()
+
+        let finished: Bool
+        if (animated) {
+            finished = await withUnsafeContinuation { continuation in
+                UIView.animate(withDuration: 0.25, animations: {
+                    screen.view.alpha = 1.0
+                    oldScreen?.view.alpha = 0.0
+                }) { finished in
+                    continuation.resume(returning: finished)
+                }
+            }
+        } else {
+            finished = true
+        }
+        screen.view.alpha = 1.0
+        screen.didMove(toParent: self)
+        if let oldScreen = oldScreen {
+            oldScreen.willMove(toParent: nil)
+            oldScreen.view.removeFromSuperview()
+            oldScreen.removeFromParent()
+        }
+    }
+    
+    func present(_ viewController: UIViewController, animated: Bool) async {
+        await withUnsafeContinuation { continuation in
+            present(viewController, animated: animated) {
+                continuation.resume()
             }
         }
-        
-        if (animated) {
-            UIView.animate(withDuration: 0.25, animations: {
-                screen.view.alpha = 1.0
-                oldScreen?.view.alpha = 0.0
-            }, completion: completion)
-        } else {
-            completion(true)
+    }
+    
+    func dismiss(animated: Bool) async {
+        await withUnsafeContinuation { continuation in
+            dismiss(animated: animated) {
+                continuation.resume()
+            }
         }
     }
 }
