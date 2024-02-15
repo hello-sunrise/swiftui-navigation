@@ -18,6 +18,14 @@ Mention whether you follow Semantic Versioning.
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+## [1.6.0] - 2024-02-15
+
+### Removed
+- Parameter `completion`
+
+### Changed
+- Enforced any screen transitions tasks to be executed one after another using internally a FIFO queue 
+
 ## [1.5.0] - 2023-12-01
 
 ### Added
