@@ -18,6 +18,11 @@ Mention whether you follow Semantic Versioning.
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+## [1.6.1] - 2025-01-08
+
+### Changed
+- Support iOS 16 -> 18 
+
 ## [1.6.0] - 2024-02-15
 
 ### Removed
