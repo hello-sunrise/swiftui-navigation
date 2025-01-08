@@ -105,18 +105,15 @@ private extension UIViewController {
         screen.view.alpha = 0.0
         view.addSubview(screen.view)
 
-        let finished: Bool
         if (animated) {
-            finished = await withUnsafeContinuation { continuation in
+            await withUnsafeContinuation { continuation in
                 UIView.animate(withDuration: 0.25, animations: {
                     screen.view.alpha = 1.0
                     oldScreen?.view.alpha = 0.0
                 }) { finished in
-                    continuation.resume(returning: finished)
+                    continuation.resume()
                 }
             }
-        } else {
-            finished = true
         }
         screen.view.alpha = 1.0
         screen.didMove(toParent: self)

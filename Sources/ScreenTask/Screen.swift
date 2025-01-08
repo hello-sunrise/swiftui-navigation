@@ -33,7 +33,7 @@ internal class Screen: UIHostingController<ScreenView>, Identifiable {
         self.view.backgroundColor = self.backgroundColor.uiColor
     }
     
-    var transition: Transition = .none {
+    var transition: SwiftNav.Transition = .none {
         willSet {
             self.view.backgroundColor = self.backgroundColor.uiColor
             self.modalTransitionStyle = .coverVertical
