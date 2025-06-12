@@ -18,7 +18,7 @@ internal class ScreenStack: NSObject {
         self.rootViewController = viewController
         self.currentScreen = screen
         super.init()
-        queue.enqueue {
+        Task(on: queue) {
             await self.rootViewController.setScreen(screen, animated: false)
         }
     }
@@ -29,7 +29,7 @@ internal class ScreenStack: NSObject {
         popTransition: Transition,
         animated: Bool
     ) {
-        queue.enqueue { @MainActor in
+        Task(on: queue) { @MainActor in
             screen.transition = pushTransition
             if (pushTransition == .sheet) {
                 screen.presentationController?.delegate = self
@@ -43,7 +43,7 @@ internal class ScreenStack: NSObject {
     }
     
     func popUntil(screenName: String, arguments: [String: Any], inclusive: Bool, animated: Bool) {
-        queue.enqueue { @MainActor in
+        Task(on: queue) { @MainActor in
             var screen: Screen! = self.currentScreen
             
             while screen != nil && screen.name != screenName {
@@ -72,7 +72,7 @@ internal class ScreenStack: NSObject {
     }
     
     func clear(asNewRoot screen: Screen? = nil, animated: Bool) {
-        queue.enqueue { @MainActor in
+        Task(on: queue) { @MainActor in
             if let screen = screen {
                 await self.rootViewController.setScreen(screen, animated: animated)
                 self.currentScreen = screen

@@ -13,7 +13,7 @@ let package = Package(
             targets: ["SwiftNav"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/dfed/swift-async-queue", from: "0.6.1")
+        .package(url: "https://github.com/dfed/swift-async-queue", from: "0.7.1")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
