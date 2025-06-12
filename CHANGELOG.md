@@ -18,6 +18,11 @@ Mention whether you follow Semantic Versioning.
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+## [1.6.2] - 2025-06-12
+
+### Fixed
+- Updated swift-async-queue 0.7.1
+
 ## [1.6.1] - 2025-01-08
 
 ### Changed
