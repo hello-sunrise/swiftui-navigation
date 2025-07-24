@@ -18,6 +18,11 @@ Mention whether you follow Semantic Versioning.
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+## [1.6.3] - 2025-07-24
+
+### Fixed
+- Support orientation rotation
+
 ## [1.6.2] - 2025-06-12
 
 ### Fixed
@@ -26,7 +31,7 @@ Mention whether you follow Semantic Versioning.
 ## [1.6.1] - 2025-01-08
 
 ### Changed
-- Support iOS 16 -> 18 
+- Support iOS 16 -> 18
 
 ## [1.6.0] - 2024-02-15
 
@@ -34,7 +39,7 @@ Mention whether you follow Semantic Versioning.
 - Parameter `completion`
 
 ### Changed
-- Enforced any screen transitions tasks to be executed one after another using internally a FIFO queue 
+- Enforced any screen transitions tasks to be executed one after another using internally a FIFO queue
 
 ## [1.5.0] - 2023-12-01
 
@@ -55,7 +60,7 @@ Mention whether you follow Semantic Versioning.
 
 ### Added
 - Parameter `animated` to `NavController` functions
-- Parameters `pushTransition` and `popTransition` to `NavController.push()` 
+- Parameters `pushTransition` and `popTransition` to `NavController.push()`
 
 ### Removed
 - Parameter `transition` to `NavController.push()`
@@ -73,7 +78,7 @@ Mention whether you follow Semantic Versioning.
 - Renamed `TransitionStyle` to `Transition`
 
 ### Fixed
-- `backgroundColor` not changing when switching between light and dark mode 
+- `backgroundColor` not changing when switching between light and dark mode
 
 ## [1.1.0] - 2023-07-19
 
