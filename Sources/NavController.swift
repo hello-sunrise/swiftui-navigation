@@ -89,6 +89,7 @@ public class NavController: ObservableObject {
     internal var viewController: UIViewController? {
         didSet {
             guard let viewController = viewController else { return }
+            viewController.view.backgroundColor = backgroundColor.uiColor
             let rootScreen = navGraph.screenBuilder(of: root)!.screen(navController: self, arguments: [:])
             self.screenStack = ScreenStack(viewController: viewController, screen: rootScreen)
             onNavigationChange?(screenStack.currentScreen.name, screenStack.currentScreen.arguments)

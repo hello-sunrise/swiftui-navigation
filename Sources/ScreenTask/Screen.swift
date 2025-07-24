@@ -33,6 +33,12 @@ internal class Screen: UIHostingController<ScreenView>, Identifiable {
         self.view.backgroundColor = self.backgroundColor.uiColor
     }
     
+    override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        self.view.frame = .init(origin: .zero, size: size)
+        self.view.layoutIfNeeded()
+    }
+    
     var transition: SwiftNav.Transition = .none {
         willSet {
             self.view.backgroundColor = self.backgroundColor.uiColor
