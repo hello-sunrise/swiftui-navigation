@@ -30,6 +30,7 @@ internal class Screen: UIHostingController<ScreenView>, Identifiable {
     }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        guard self.view.backgroundColor != .clear else { return }
         self.view.backgroundColor = self.backgroundColor.uiColor
     }
     
