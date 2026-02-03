@@ -18,6 +18,11 @@ Mention whether you follow Semantic Versioning.
 * `Fixed` for any bug fixes.
 * `Security` in case of vulnerabilities.
 
+## [1.6.4] - 2026-02-03
+
+### Fixed
+- Screen background clear with `Transaction.coverOverFullscreen`	
+
 ## [1.6.3] - 2025-07-24
 
 ### Fixed
